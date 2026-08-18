@@ -29,8 +29,17 @@ jobs:
         uses: azure/login@v1.4.6
         with:
           creds: '${{ secrets.AZURE_CREDENTIALS }}'
-
-      # Builds and pushes an image up to your Azure Container Registry
-      - name: Build and push image to ACR
+      # Authorize Azure Container Registry (required for Docker push command)
+      - name: Log in to Azure Container Registry
         run: |
-          az acr build --file ${{ env.DOCKER_PATH }} --image ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_NAME }}:${{ github.sha }} --registry ${{ env.AZURE_CONTAINER_REGISTRY }} -g ${{ env.RESOURCE_GROUP }} .
+          az acr login --name ${{ env.AZURE_CONTAINER_REGISTRY }}
+    
+      # Builds and pushes an image up to your Azure Container Registry
+      # - name: Build and push image to ACR
+      #  run: |
+      #    az acr build --file ${{ env.DOCKER_PATH }} --image ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_NAME }}:${{ github.sha }} --registry ${{ env.AZURE_CONTAINER_REGISTRY }} -g ${{ env.RESOURCE_GROUP }} .
+      # Builds and deploys an image using GitHub's local Docker environment
+      - name: Build and push image using Docker
+        run: |
+          docker build -f ${{ env.DOCKER_PATH }} -t ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_NAME }}:${{ github.sha }} .
+          docker push ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_NAME }}:${{ github.sha }}
